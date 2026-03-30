@@ -3,7 +3,7 @@ package com.hackathon.backend.controller;
 import com.hackathon.backend.model.Role;
 import com.hackathon.backend.model.User;
 import com.hackathon.backend.payload.request.LoginRequest;
-import com.hackathon.backend.payload.request.RegisterRequest;
+import com.hackathon.backend.payload.request.SignupRequest;
 import com.hackathon.backend.payload.response.AuthResponse;
 import com.hackathon.backend.payload.response.MessageResponse;
 import com.hackathon.backend.repository.UserRepository;
@@ -41,20 +41,30 @@ public class AuthController {
      * Registers a new CUSTOMER user.
      */
     @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@Valid @RequestBody RegisterRequest req) {
+    public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest req) {
 
         if (userRepository.existsByEmail(req.getEmail())) {
             return ResponseEntity.badRequest()
                     .body(new MessageResponse("Error: Email is already registered!"));
         }
 
+        if (userRepository.existsByUsername(req.getUsername())) {
+            return ResponseEntity.badRequest()
+                    .body(new MessageResponse("Error: Username is already taken!"));
+        }
+
+        if (req.getPhone() != null && !req.getPhone().isEmpty() && userRepository.existsByPhone(req.getPhone())) {
+            return ResponseEntity.badRequest()
+                    .body(new MessageResponse("Error: Phone number is already in use!"));
+        }
+
         User user = new User();
-        user.setName(req.getName());
+        user.setName(req.getFullName());
         user.setEmail(req.getEmail());
-        user.setUsername(req.getEmail());  // username = email for auth chain
+        user.setUsername(req.getUsername());
         user.setPassword(encoder.encode(req.getPassword()));
         user.setPhone(req.getPhone());
-        user.setRole(Role.CUSTOMER);       // All self-registrations are CUSTOMER
+        user.setRole(Role.CUSTOMER);       // Force all self-registrations to CUSTOMER
 
         userRepository.save(user);
 

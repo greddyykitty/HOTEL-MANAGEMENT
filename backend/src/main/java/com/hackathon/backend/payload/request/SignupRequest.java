@@ -18,7 +18,6 @@ public class SignupRequest {
     @NotBlank
     @Size(max = 50)
     @Email
-    @Pattern(regexp = "^.+@office\\.com$", message = "Email must end with @office.com")
     private String email;
 
     @NotBlank

@@ -54,8 +54,9 @@ public class BookingController {
         try {
             BookingResponse response = bookingService.cancelBooking(id, userDetails.getId());
             return ResponseEntity.ok(response);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body("Error: " + e.getMessage());
         }
     }
 }
