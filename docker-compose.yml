@@ -1,45 +1,50 @@
 version: '3.8'
 
 services:
-  mysql:
+  db:
     image: mysql:8.0
-    container_name: hackathon_mysql
+    container_name: luxestay-db
+    restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: hackathon_db
-      MYSQL_USER: hackathon_user
-      MYSQL_PASSWORD: hackathon_password
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-hackathon_db}
     ports:
       - "3306:3306"
     volumes:
-      - mysql_data:/var/lib/mysql
+      - mysql-data:/var/lib/mysql
 
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: hackathon_backend
+    container_name: luxestay-backend
+    restart: always
     ports:
       - "8080:8080"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/hackathon_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-      SPRING_DATASOURCE_USERNAME: hackathon_user
-      SPRING_DATASOURCE_PASSWORD: hackathon_password
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/${MYSQL_DATABASE:-hackathon_db}?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=${MYSQL_ROOT_PASSWORD:-root}
+      - JWT_SECRET=${JWT_SECRET:-9a4f2c8d3b7a1e6f45c8a0b3f267d8b1d4e6f3c8a9d2b5f8e3a9c8b5f6v8a3d9}
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+    volumes:
+      - backend-uploads:/app/uploads
     depends_on:
-      - mysql
+      - db
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: hackathon_frontend
+      args:
+        - VITE_API_URL=${VITE_API_URL:-http://localhost:8080/api}
+    container_name: luxestay-frontend
+    restart: always
     ports:
-      - "5173:5173"
-    environment:
-      - VITE_API_URL=http://localhost:8080
+      - "80:80"
     depends_on:
       - backend
 
 volumes:
-  mysql_data:
+  mysql-data:
+  backend-uploads:

@@ -114,6 +114,43 @@ public class AdminController {
                 .mapToDouble(b -> b.getTotalPrice() != null ? b.getTotalPrice() : 0)
                 .sum();
 
+        // Monthly Revenue (Last 6 Months)
+        List<Map<String, Object>> monthlyRevenue = allBookings.stream()
+                .filter(b -> "CONFIRMED".equals(b.getStatus()))
+                .collect(Collectors.groupingBy(
+                        b -> b.getCreatedAt().getYear() * 100 + b.getCreatedAt().getMonthValue(),
+                        Collectors.summingDouble(b -> b.getTotalPrice() != null ? b.getTotalPrice() : 0)
+                ))
+                .entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(e -> {
+                    Map<String, Object> m = new HashMap<>();
+                    int yearMonth = e.getKey();
+                    int year = yearMonth / 100;
+                    int month = yearMonth % 100;
+                    m.put("label", java.time.Month.of(month).name().substring(0, 3) + " " + year);
+                    m.put("value", e.getValue());
+                    return m;
+                })
+                .collect(Collectors.toList());
+
+        // Yearly Revenue
+        List<Map<String, Object>> yearlyRevenue = allBookings.stream()
+                .filter(b -> "CONFIRMED".equals(b.getStatus()))
+                .collect(Collectors.groupingBy(
+                        b -> b.getCreatedAt().getYear(),
+                        Collectors.summingDouble(b -> b.getTotalPrice() != null ? b.getTotalPrice() : 0)
+                ))
+                .entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(e -> {
+                    Map<String, Object> m = new HashMap<>();
+                    m.put("label", String.valueOf(e.getKey()));
+                    m.put("value", e.getValue());
+                    return m;
+                })
+                .collect(Collectors.toList());
+
         Map<String, Object> stats = new HashMap<>();
         stats.put("totalUsers", userRepository.count());
         stats.put("totalHotels", hotelRepository.count());
@@ -121,6 +158,8 @@ public class AdminController {
         stats.put("confirmedBookings", allBookings.stream().filter(b -> "CONFIRMED".equals(b.getStatus())).count());
         stats.put("cancelledBookings", allBookings.stream().filter(b -> "CANCELLED".equals(b.getStatus())).count());
         stats.put("totalRevenue", revenue);
+        stats.put("monthlyRevenue", monthlyRevenue);
+        stats.put("yearlyRevenue", yearlyRevenue);
         return ResponseEntity.ok(stats);
     }
 

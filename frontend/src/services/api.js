@@ -82,4 +82,10 @@ export const adminService = {
     deleteUser: (id) => api.delete(`/admin/users/${id}`),
 };
 
+// ── Review Service ────────────────────────────────────────────────────────────
+export const reviewService = {
+    submitReview: (data) => api.post('/reviews', data),
+    getHotelReviews: (hotelId) => api.get(`/reviews/hotel/${hotelId}`),
+};
+
 export default api;

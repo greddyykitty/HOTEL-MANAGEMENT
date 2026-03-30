@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X } from 'lucide-react';
+import { X, ChevronUp, ChevronDown } from 'lucide-react';
 
-const ScrollColumn = ({ items, selectedValue, onSelect, itemHeight = 40 }) => {
+const ScrollColumn = ({ items, selectedValue, onSelect, itemHeight = 48 }) => {
   const scrollRef = useRef(null);
   const isProgrammaticScroll = useRef(false);
 
@@ -26,40 +26,40 @@ const ScrollColumn = ({ items, selectedValue, onSelect, itemHeight = 40 }) => {
   };
 
   return (
-    <div 
-      ref={scrollRef}
-      onScroll={handleScroll}
-      className="flex-1 h-[200px] overflow-y-auto snap-y snap-mandatory [&::-webkit-scrollbar]:hidden relative z-10"
-      style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}
-    >
-      <div style={{ height: '80px' }} />
-      {items.map((item) => (
-        <div 
-          key={item.value} 
-          className={`h-[40px] flex items-center justify-center snap-center transition-all duration-200 cursor-pointer
-            ${item.value === selectedValue ? 'text-slate-900 font-semibold text-xl' : 'text-slate-400 font-medium text-sm'}
-          `}
-          onClick={() => {
-             const idx = items.findIndex((i) => i.value === item.value);
-             if (scrollRef.current) {
-               scrollRef.current.scrollTo({
-                 top: idx * itemHeight,
-                 behavior: 'smooth'
-               });
-             }
-             onSelect(item.value);
-          }}
-        >
-          {item.label}
-        </div>
-      ))}
-      <div style={{ height: '80px' }} />
+    <div className="flex-1 relative group">
+      <div 
+        ref={scrollRef}
+        onScroll={handleScroll}
+        className="h-[240px] overflow-y-auto snap-y snap-mandatory [&::-webkit-scrollbar]:hidden relative z-10 py-[96px]"
+        style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}
+      >
+        {items.map((item) => (
+          <div 
+            key={item.value} 
+            className={`h-[48px] flex items-center justify-center snap-center transition-all duration-300 cursor-pointer
+              ${item.value === selectedValue ? 'text-white font-black text-2xl scale-110' : 'text-slate-600 font-bold text-sm'}
+            `}
+            onClick={() => {
+               const idx = items.findIndex((i) => i.value === item.value);
+               if (scrollRef.current) {
+                 scrollRef.current.scrollTo({
+                   top: idx * itemHeight,
+                   behavior: 'smooth'
+                 });
+               }
+               onSelect(item.value);
+            }}
+          >
+            {item.label}
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
 
 const DatePickerModal = ({ isOpen, onClose, initialDate, onSelect }) => {
-  const defaultDate = initialDate ? new Date(initialDate) : new Date(1998, 5, 24);
+  const defaultDate = initialDate ? new Date(initialDate) : new Date(2000, 0, 1);
 
   const [year, setYear] = useState(defaultDate.getFullYear());
   const [month, setMonth] = useState(defaultDate.getMonth());
@@ -67,7 +67,7 @@ const DatePickerModal = ({ isOpen, onClose, initialDate, onSelect }) => {
 
   useEffect(() => {
     if (isOpen) {
-      const d = initialDate ? new Date(initialDate) : new Date(1998, 5, 24);
+      const d = initialDate ? new Date(initialDate) : new Date(2000, 0, 1);
       setYear(d.getFullYear());
       setMonth(d.getMonth());
       setDay(d.getDate());
@@ -75,25 +75,18 @@ const DatePickerModal = ({ isOpen, onClose, initialDate, onSelect }) => {
   }, [isOpen, initialDate]);
 
   const currentYear = new Date().getFullYear();
-  const yearItems = Array.from({ length: currentYear - 1900 + 1 }, (_, i) => {
-     const value = 1900 + i;
-     return { label: value.toString(), value };
-  }).reverse(); // Latest years on top usually, or standard order? The image has older years first: 1995, 1996, 1997, 1998. So we keep it normal. (Reverting back to normal)
-
-  // the image had 1995..2001 so normal order is good.
-  const normalYearItems = Array.from({ length: currentYear - 1900 + 1 }, (_, i) => {
-     const value = 1900 + i;
+  const yearItems = Array.from({ length: currentYear - 1920 + 1 }, (_, i) => {
+     const value = 1920 + i;
      return { label: value.toString(), value };
   });
 
-
-  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const monthNames = ["JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"];
   const monthItems = monthNames.map((name, index) => ({ label: name, value: index }));
 
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const dayItems = Array.from({ length: daysInMonth }, (_, i) => {
       const value = i + 1;
-      return { label: value.toString(), value };
+      return { label: value.toString().padStart(2, '0'), value };
   });
 
   const validDay = day > daysInMonth ? daysInMonth : day;
@@ -108,40 +101,43 @@ const DatePickerModal = ({ isOpen, onClose, initialDate, onSelect }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in" onClick={onClose}>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/80 backdrop-blur-xl animate-in fade-in duration-300" onClick={onClose}>
       <div 
-        className="bg-white rounded-[2rem] w-full max-w-sm overflow-hidden shadow-2xl relative"
+        className="bg-[#0f172a] rounded-[48px] w-full max-w-md overflow-hidden shadow-2xl border border-white/10 relative"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-slate-100">
-          <div className="w-6"></div>
-          <h2 className="text-[14px] font-bold text-slate-800 tracking-wider">SET BIRTHDAY</h2>
+        <div className="flex items-center justify-between px-10 pt-10 pb-6 border-b border-white/5">
+          <div>
+            <p className="text-[#FF4D6D] text-[10px] font-black uppercase tracking-[0.4em] mb-1">Temporal Selection</p>
+            <h2 className="text-xl font-black text-white tracking-widest uppercase italic">Birth Date</h2>
+          </div>
           <button 
             type="button" 
             onClick={onClose} 
-            className="text-slate-400 hover:text-slate-700 transition-colors w-6 flex justify-end"
+            className="text-slate-500 hover:text-white transition-all bg-white/5 p-2 rounded-full"
           >
             <X size={20} />
           </button>
         </div>
 
-        <div className="relative py-4 px-4 bg-white">
-          <div className="absolute top-1/2 left-0 right-0 h-[40px] bg-slate-100/70 -translate-y-1/2 z-0"></div>
+        <div className="relative py-8 px-8 bg-[#0f172a]">
+          {/* Selection Highlight */}
+          <div className="absolute top-1/2 left-8 right-8 h-[54px] bg-white/5 border-y border-white/10 -translate-y-1/2 z-0 rounded-2xl pointer-events-none"></div>
 
-          <div className="flex gap-2">
-            <ScrollColumn items={normalYearItems} selectedValue={year} onSelect={setYear} />
+          <div className="flex gap-4 relative z-10">
+            <ScrollColumn items={yearItems} selectedValue={year} onSelect={setYear} />
             <ScrollColumn items={monthItems} selectedValue={month} onSelect={setMonth} />
             <ScrollColumn items={dayItems} selectedValue={validDay} onSelect={setDay} />
           </div>
         </div>
 
-        <div className="p-6 pt-2">
+        <div className="p-10 pt-4">
           <button
             type="button"
             onClick={handleSubmit}
-            className="w-full bg-[#111] hover:bg-black text-white py-4 rounded-xl transition-all active:scale-[0.98] font-bold tracking-wider text-sm shadow-md"
+            className="w-full bg-white text-black hover:bg-[#FF4D6D] hover:text-white py-5 rounded-[24px] transition-all active:scale-[0.98] font-black tracking-[0.3em] text-[11px] uppercase shadow-xl shadow-white/5"
           >
-            SUBMIT
+            Confirm Calibration
           </button>
         </div>
 
