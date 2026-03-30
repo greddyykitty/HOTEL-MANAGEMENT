@@ -3,8 +3,8 @@ package com.hackathon.backend.controller;
 import com.hackathon.backend.model.Role;
 import com.hackathon.backend.model.User;
 import com.hackathon.backend.payload.request.LoginRequest;
-import com.hackathon.backend.payload.request.SignupRequest;
-import com.hackathon.backend.payload.response.JwtResponse;
+import com.hackathon.backend.payload.request.RegisterRequest;
+import com.hackathon.backend.payload.response.AuthResponse;
 import com.hackathon.backend.payload.response.MessageResponse;
 import com.hackathon.backend.repository.UserRepository;
 import com.hackathon.backend.security.JwtUtils;
@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
+
     @Autowired
     AuthenticationManager authenticationManager;
 
@@ -35,65 +36,56 @@ public class AuthController {
     @Autowired
     JwtUtils jwtUtils;
 
-    @PostMapping("/login")
-    public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
-
-        // Determine if identifier is email or username
-        String usernameOrEmail = loginRequest.getIdentifier();
-        
-        // Let UserDetailsServiceImpl handle resolving username or email
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(usernameOrEmail, loginRequest.getPassword()));
-
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        String jwt = jwtUtils.generateJwtToken(authentication);
-        
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();    
-
-        return ResponseEntity.ok(new JwtResponse(jwt, 
-                                                 userDetails.getId(), 
-                                                 userDetails.getUsername(), 
-                                                 userDetails.getEmail(), 
-                                                 userDetails.getAuthorities().stream().findFirst().get().getAuthority()));
-    }
-
+    /**
+     * POST /api/auth/register
+     * Registers a new CUSTOMER user.
+     */
     @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signUpRequest) {
-        if (userRepository.existsByUsername(signUpRequest.getUsername())) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(new MessageResponse("Error: Username is already taken!"));
+    public ResponseEntity<?> registerUser(@Valid @RequestBody RegisterRequest req) {
+
+        if (userRepository.existsByEmail(req.getEmail())) {
+            return ResponseEntity.badRequest()
+                    .body(new MessageResponse("Error: Email is already registered!"));
         }
 
-        if (userRepository.existsByEmail(signUpRequest.getEmail())) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(new MessageResponse("Error: Email is already in use!"));
-        }
-
-        if (signUpRequest.getDob() != null) {
-            java.time.Period period = java.time.Period.between(signUpRequest.getDob(), java.time.LocalDate.now());
-            if (period.getYears() <= 10) {
-                return ResponseEntity
-                        .badRequest()
-                        .body(new MessageResponse("Error: User must be strictly older than 10 years!"));
-            }
-        }
-
-        // Create new user's account
         User user = new User();
-        user.setFullName(signUpRequest.getFullName());
-        user.setUsername(signUpRequest.getUsername());
-        user.setEmail(signUpRequest.getEmail());
-        user.setPassword(encoder.encode(signUpRequest.getPassword()));
-        user.setPhone(signUpRequest.getPhone());
-        user.setDob(signUpRequest.getDob());
-        user.setGender(signUpRequest.getGender());
-        user.setAddress(signUpRequest.getAddress());
-        user.setRole(Role.USER); // Default Role
+        user.setName(req.getName());
+        user.setEmail(req.getEmail());
+        user.setUsername(req.getEmail());  // username = email for auth chain
+        user.setPassword(encoder.encode(req.getPassword()));
+        user.setPhone(req.getPhone());
+        user.setRole(Role.CUSTOMER);       // All self-registrations are CUSTOMER
 
         userRepository.save(user);
 
         return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
+    }
+
+    /**
+     * POST /api/auth/login
+     * Authenticates user and returns JWT token.
+     */
+    @PostMapping("/login")
+    public ResponseEntity<?> loginUser(@Valid @RequestBody LoginRequest req) {
+
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(req.getEmail(), req.getPassword()));
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        String jwt = jwtUtils.generateJwtToken(authentication);
+
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        String role = userDetails.getAuthorities().stream()
+                .findFirst()
+                .map(a -> a.getAuthority())
+                .orElse("ROLE_CUSTOMER");
+
+        // Fetch name from DB
+        User user = userRepository.findByEmail(req.getEmail())
+                .orElse(null);
+        String name = user != null ? user.getName() : userDetails.getUsername();
+
+        return ResponseEntity.ok(new AuthResponse(jwt, userDetails.getId(), name,
+                userDetails.getEmail(), role));
     }
 }

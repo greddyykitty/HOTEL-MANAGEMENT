@@ -2,7 +2,10 @@ package com.hackathon.backend.payload.request;
 
 import jakarta.validation.constraints.NotBlank;
 
-public class LoginRequest {
+public class RegisterRequest {
+
+    @NotBlank(message = "Name is required")
+    private String name;
 
     @NotBlank(message = "Email is required")
     private String email;
@@ -10,12 +13,17 @@ public class LoginRequest {
     @NotBlank(message = "Password is required")
     private String password;
 
+    private String phone;
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
 
     public String getPassword() { return password; }
     public void setPassword(String password) { this.password = password; }
 
-    // Alias for Spring Security auth chain (used via identifier field in old form)
-    public String getIdentifier() { return email; }
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
 }
