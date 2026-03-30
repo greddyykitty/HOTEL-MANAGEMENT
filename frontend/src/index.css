@@ -1,0 +1,45 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary-300: #ffaebf;
+  --color-primary-400: #ff8ca3;
+  --color-primary-500: #ff748e; /* Coral/Salmon Pink */
+  --color-primary-600: #f45b77;
+  
+  --color-surface-bg: #ffaebf; /* Matching exterior */
+}
+
+@layer base {
+  body {
+    @apply bg-surface-bg text-slate-800 antialiased selection:bg-primary-500/30 font-sans;
+  }
+}
+
+@layer utilities {
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+  }
+  
+  .animate-slide-up {
+    animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  
+  /* Input resets for the new bottom-border only style */
+  .styled-input {
+    @apply w-full pl-8 pr-12 py-3 bg-transparent border-b border-slate-200 text-slate-800 placeholder-slate-300 focus:outline-none focus:border-primary-500 transition-colors rounded-none outline-none;
+  }
+  
+  .styled-icon-wrapper {
+    @apply absolute inset-y-0 left-0 flex items-center pointer-events-none text-slate-300 pb-1;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
